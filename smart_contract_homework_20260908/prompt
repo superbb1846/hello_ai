@@ -1,1 +1,4 @@
 
+使用solidity编写一个bigbank_demo合约继承自bank_demo合约，要求：
+1.余额>0.001ETH（用modifier实现权限控制）的EOA账户方可存款至bigbank_demo合约
+2.把管理员转交给Admin合约，Admin可调用bigbank_demo的withdraw
