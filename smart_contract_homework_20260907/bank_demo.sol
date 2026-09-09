@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -23,7 +22,7 @@ contract bank_demo {
         admin = msg.sender;
     }
     
-    // 5. 存款函数：通过 Metamask 发送 ETH 时调用
+    // 5. 存款函数：通过 Metamask 主动调用 deposit() 存款
     function deposit() public payable {
         require(msg.value > 0, "Deposit amount must be greater than 0");
         
@@ -34,44 +33,46 @@ contract bank_demo {
         updateTopThree(msg.sender);
     }
     
-    // 6. 内部函数：更新前3名账户地址
+    // 6. 接收纯 ETH 转账（无需调用任何函数直接转账）
+    receive() external payable {
+        require(msg.value > 0, "Deposit amount must be greater than 0");
+        
+        balances[msg.sender] += msg.value;
+        updateTopThree(msg.sender);
+    }
+    
+    // 7. 内部函数：更新前3名账户地址（优化版逻辑）
     function updateTopThree(address user) internal {
         uint256 userBalance = balances[user];
         
-        // 遍历前3名数组，找到当前用户应该插入的位置
+        // 如果用户已经在榜单中，先将其移出，腾出空间
         for (uint8 i = 0; i < 3; i++) {
             if (topThree[i] == user) {
-                // 如果用户已经在榜单中，只需重新排序
-                sortTopThree();
-                return;
-            }
-            
-            // 如果当前用户的余额大于榜单上的用户，则插入
-            if (userBalance > balances[topThree[i]]) {
-                // 将后面的元素依次往后移
-                for (uint8 j = 2; j > i; j--) {
-                    topThree[j] = topThree[j - 1];
-                }
-                topThree[i] = user;
-                return;
-            }
-        }
-    }
-    
-    // 内部辅助函数：对前3名进行去重和排序（简单冒泡）
-    function sortTopThree() internal {
-        for (uint8 i = 0; i < 2; i++) {
-            for (uint8 j = 0; j < 2 - i; j++) {
-                if (balances[topThree[j]] < balances[topThree[j + 1]]) {
-                    address temp = topThree[j];
+                for (uint8 j = i; j < 2; j++) {
                     topThree[j] = topThree[j + 1];
-                    topThree[j + 1] = temp;
+                }
+                topThree[2] = address(0); // 将空出的最后一位清零
+                break;
+            }
+        }
+        
+        // 如果当前用户的余额大于榜单上的最低金额，则插入
+        if (userBalance > balances[topThree[2]]) {
+            topThree[2] = user;
+            // 简单冒泡排序，将新插入的用户向上移动
+            for (uint8 i = 2; i > 0; i--) {
+                if (balances[topThree[i]] > balances[topThree[i - 1]]) {
+                    address temp = topThree[i];
+                    topThree[i] = topThree[i - 1];
+                    topThree[i - 1] = temp;
+                } else {
+                    break; // 如果不需要继续交换，提前退出循环，节省 Gas
                 }
             }
         }
     }
     
-    // 7. 管理员提取所有余额函数
+    // 8. 管理员提取所有余额函数
     function withdraw() public onlyAdmin {
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
