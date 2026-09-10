@@ -1,1 +1,2 @@
 
+使用solidity编写一个token，名称叫做ABBA，遵循ERC20标准
