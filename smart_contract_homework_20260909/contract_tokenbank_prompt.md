@@ -1,4 +1,6 @@
 
 使用solidity编写一个名叫tokenbank的合约，可以将名称为ABBA的Token存入此合约，另要求实现以下功能:
+
 1.记录每个EOA用户存入的 token 数量
+
 2.每个EOA用户可以提取自己的之前存入的TOKEN（要求使用withdraw方法）
